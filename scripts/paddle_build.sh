@@ -1,4 +1,6 @@
-BUILD=build #cmake-build-debug
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+
+BUILD=${ROOT}/build #${ROOT}/cmake-build-debug
 mkdir -p $BUILD
 
 cd $BUILD
