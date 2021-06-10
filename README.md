@@ -128,3 +128,4 @@ run_time = 2093
 ```
 
 ## Chapter 3: 
+ Subscribe my wechat public account: `after midnight: bug-driven ML devleloping lab` for updates

@@ -17,9 +17,11 @@ export CMAKE_CUDA_COMPILER=$CMAKE_CUDA_COMPILER
 
 export LD_LIBRARY_PATH=$CUDA_HOME/lib64:$LD_LIBRARY_PATH
 
+OLD_CMAKE_PATH=$PATH
 PATH=cmake-3.16.0-Linux-x86_64/bin:$PATH
 export PATH
+export OLD_CMAKE_PATH
 
 # make sure use downloaded protoc used by c++ (v3.1.0)
-PATH=/home/yiak/WorkSpace/Github/Paddle/build/third_party/install/protobuf/bin:$PATH
+PATH=${HOME}/WorkSpace/Github/Paddle/build/third_party/install/protobuf/bin:$PATH
 export PATH
