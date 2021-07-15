@@ -20,6 +20,12 @@ add_library(${PROJECT_NAME} SHARED
         )
 set_target_properties(${PROJECT_NAME} PROPERTIES LINKER_LANGUAGE CXX PRIVATE ${CMAKE_CXX_FLAGS})
 
+# add cuda support
+cuda_include_directories(${CMAKE_CURRENT_SOURCE_DIR})
+cuda_add_library(sampling_cu_kernel
+        "${CMAKE_CURRENT_SOURCE_DIR}/farthest_point_sampling_op.cu"
+        )
+
 # add paddle libraries support
 
 include_directories("${PADDLE_LIB}/third_party/install/mklml/include")
@@ -43,7 +49,7 @@ target_link_libraries(${PROJECT_NAME}
         # use this static library <= Paddle 2.0
         paddle_framework
         gflags glog protobuf xxhash iomp5
-        # cudart
+        ${CUDA_LIBRARIES}
         ${TBB_LIBRARIES}
         ${EXTERNAL_LIB}
         ${ZLIB_LIBRARIES}
