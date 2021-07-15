@@ -72,7 +72,7 @@ protected:
  *   implementation for gpu device resides in impl/${OpName}.${DeviceSuffix}
  */
 template<typename DeviceContext>
-void farthestPointSampling(int* shape, int size, int m, double* dataset_in_ptr, int* dataset_in_indices_ptr);
+void farthestPointSampling(int* shape, int init_val, int m, double* dataset_in_ptr, int* dataset_in_indices_ptr);
 
 template <typename DeviceContext, typename T>
 class FarthestPointSamplingKernel : public framework::OpKernel<T> {
