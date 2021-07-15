@@ -52,14 +52,35 @@ struct maximum : public std::binary_function<_Tp, _Tp, _Tp>
     { return std::max(__x, __y); }
 };
 
+// @todo TODO replace to imperative form to reduce the copy of data
+// Ideal(threads are always available) Space complexity : O(num_of_threads * log(N))
+// Ideal(threads are always available) Times complexity :
+struct MinVal {
+    size_t idx;
+    float val;
+
+    MinVal() : idx(0), val(0) {}
+    MinVal(size_t a, float b) {
+        idx = a;
+        val = b;
+    }
+};
+
 template <typename Fn>
-double ParallelReduce(double* values, int size, Fn reducer, size_t grainsize=1)
+MinVal ParallelReduce(double* values, int size, Fn reducer, size_t grainsize=1)
 {
     return tbb::parallel_reduce(
-            tbb::blocked_range<size_t>(0, size, grainsize),
-            0.f,
+            tbb::blocked_range<size_t>(0, size),
+            MinVal(0, 0),
             reducer,
-            maximum<double>()
+            //maximum<double>()
+            [] (MinVal x, MinVal y) -> MinVal {
+                if (x.val > y.val) {
+                    return x;
+                } else {
+                    return y;
+                }
+            }
     );
 }
 
@@ -86,12 +107,12 @@ void farthestPointSampling<platform::CPUDeviceContext>(int* shape, int size, int
         int* temp_points_in_indices_ptr = dataset_in_indices_ptr + i * height * m;
 
         Eigen::VectorXd dists;
-        Eigen::VectorXd dists_indices;
+        Eigen::VectorXi dists_indices;
 
         dists.resize(height);
         double *dists_ptr = dists.data();
         dists_indices.resize(height);
-        double *dists_indices_ptr = dists_indices.data();
+        int *dists_indices_ptr = dists_indices.data();
 
         // @todo TODO generate first point using sampling engine
         int first_sampled_idx = 0;
@@ -99,7 +120,7 @@ void farthestPointSampling<platform::CPUDeviceContext>(int* shape, int size, int
 
         auto initialize_dist_cpu_kernel = [=](const tbb::blocked_range<size_t> &range) {
             for (size_t j = range.begin(); j != range.end(); j++) {
-                dists_ptr[0] = std::numeric_limits<size_t>::max() - 1;
+                dists_ptr[j] = std::numeric_limits<size_t>::max() - 1;
             }
         };
 
@@ -125,57 +146,59 @@ void farthestPointSampling<platform::CPUDeviceContext>(int* shape, int size, int
             //
             // While, in CPU, we split the array into ranges and perform CPU reduction in parallel. Then we merge the
             // computed results by applying the same reduction again.
+            /*
             std::atomic<int> idx{0};
             idx.store(-1);
-            double val = ParallelReduce(buf_points_in_ptr, height, [=, &idx] (const tbb::blocked_range<size_t>& r, double pre_val) {
+             */
+            MinVal farthest_point = ParallelReduce(buf_points_in_ptr, height, [=] (const tbb::blocked_range<size_t>& r, MinVal init_val) -> MinVal {
                 double x, y, z, dx, dy, dz;
+                MinVal tmp_farthest_point;
                 double tmp_farthest_dist = farthest_dist;
                 double tmp_idx = -1;
+
                 for (size_t k = r.begin(); k != r.end(); k++) {
                     x = buf_points_in_ptr[k*width + 0];
                     y = buf_points_in_ptr[k*width + 1];
                     z = buf_points_in_ptr[k*width + 2];
 
                     // select the minimum distance to previous sampled points
-                    double dist = std::numeric_limits<size_t>::max() - 1;
-                    for (int sampled_idx=j; sampled_idx >=0; sampled_idx--) {
-                        double x_i, y_i, z_i;
-                        size_t point_idx = temp_points_in_indices_ptr[sampled_idx];
-                        x_i = buf_points_in_ptr[point_idx*width + 0];
-                        y_i = buf_points_in_ptr[point_idx*width + 1];
-                        z_i = buf_points_in_ptr[point_idx*width + 2];
-
-                        dx = x - x_i;
-                        dy = y - y_i;
-                        dz = z - z_i;
-
-                        double dist_i = dx*dx + dy*dy + dz*dz;
-                        if (dist_i < dist) {
-                            dist = dist_i;
-                        }
-                    }
-
+                    /*
                     // select the maximum distance to this batch of points
                     if (dist > tmp_farthest_dist) {
                         tmp_idx = k;
                         tmp_farthest_dist = dist;
                     }
+                     */
+                    double x_j, y_j, z_j;
+                    x_j = buf_points_in_ptr[temp_points_in_indices_ptr[j] * width + 0];
+                    y_j = buf_points_in_ptr[temp_points_in_indices_ptr[j] * width + 1];
+                    z_j = buf_points_in_ptr[temp_points_in_indices_ptr[j] * width + 2];
+
+                    dx = x - x_j;
+                    dy = y - y_j;
+                    dz = z - z_j;
+
+                    double dist_j = dx * dx + dy * dy + dz * dz;
+                    if (dists_ptr[k] > dist_j) {
+                        dists_ptr[k] = dist_j;
+                        dists_indices_ptr[k] = k;
+                    }
+
+                    if (dists_ptr[k] > tmp_farthest_dist) {
+                        tmp_idx = k;
+                        tmp_farthest_dist = dists_ptr[k];
+                    }
+
                 }
 
-                dists_ptr[r.begin()] = tmp_idx;
-                dists_indices_ptr[r.begin()] = tmp_farthest_dist;
-
-                if (tmp_farthest_dist > pre_val) {
-                    idx.store(tmp_idx);
-                    return tmp_farthest_dist;
-                } else {
-                    return pre_val;
-                }
+                tmp_farthest_point.idx = tmp_idx;
+                tmp_farthest_point.val = tmp_farthest_dist;
+                return tmp_farthest_point;
 
             }, 1);
 
-            farthest_dist = val;
-            last_point_idx = idx.load();
+            farthest_dist = farthest_point.val;
+            last_point_idx = farthest_point.idx;
 
             // update sampled points indices
             temp_points_in_indices_ptr[j] = last_point_idx;
