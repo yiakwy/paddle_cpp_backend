@@ -83,7 +83,5 @@ public:
 } // operators
 } // pp3d
 
-
-
 #endif //PP_OPS_FARTHEST_POINT_SAMPLING_OP_H
 #include "impl/farthest_point_sampling_op_impl.hpp"
