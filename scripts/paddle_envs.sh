@@ -1,3 +1,5 @@
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+
 PYTHON_LIBRARY=$(python -c "import distutils.sysconfig as sysconfig; print('%s/%s' %
 (sysconfig.get_config_var('LIBDIR'), sysconfig.get_config_var('INSTSONAME')))")
 
@@ -15,13 +17,14 @@ export CUDA_HOME=$CUDA_TOOLKIT_ROOT_DIR
 CMAKE_CUDA_COMPILER="$CUDA_HOME/bin/nvcc"
 export CMAKE_CUDA_COMPILER=$CMAKE_CUDA_COMPILER
 
-export LD_LIBRARY_PATH=$CUDA_HOME/lib64:$LD_LIBRARY_PATH
+export LD_LIBRARY_PATH=:$CUDA_HOME/lib64:$LD_LIBRARY_PATH
 
-OLD_CMAKE_PATH=$PATH
-PATH=cmake-3.16.0-Linux-x86_64/bin:$PATH
+NOCMAKE_PATH=$PATH
+PATH=$ROOT/scripts/cmake-3.16.0-Linux-x86_64/bin:$PATH
 export PATH
-export OLD_CMAKE_PATH
+export NOCMAKE_PATH
 
 # make sure use downloaded protoc used by c++ (v3.1.0)
 PATH=${HOME}/WorkSpace/Github/Paddle/build/third_party/install/protobuf/bin:$PATH
+PATH=${HOME}/WorkSpace/Github/Paddle/build/third_party/install/protobuf/include:$PATH
 export PATH

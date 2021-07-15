@@ -4,17 +4,10 @@ file(GLOB_RECURSE FILES *.cpp *.cc *.c *.hpp *.h)
 message(STATUS "pp_ops SRCS: ${FILES}")
 
 list(REMOVE_ITEM FILES "${CMAKE_CURRENT_SOURCE_DIR}/farthest_point_sampling_op_test.cc")
+# removed files for building kernels with paddle-gpu-1.8.5
+list(REMOVE_ITEM FILES "${CMAKE_CURRENT_SOURCE_DIR}/twisted_conv2d.h")
+list(REMOVE_ITEM FILES "${CMAKE_CURRENT_SOURCE_DIR}/twisted_conv2d.cc")
 
-#[[
-# find paddle header files and library
-execute_process(COMMAND python -c "import paddle.sysconfig as sysconfig; print(sysconfig.get_include())"
-        OUTPUT_VARIABLE PADDLE_INCR OUTPUT_STRIP_TRAILING_WHITESPACE)
-message(STATUS "${PROJECT_NAME} PADDLE_INCR: ${PADDLE_INCR}")
-# find paddle libraries
-execute_process(COMMAND python -c "import paddle.sysconfig as sysconfig; print(sysconfig.get_lib())"
-        OUTPUT_VARIABLE PADDLE_LIB_DIR OUTPUT_STRIP_TRAILING_WHITESPACE)
-message(STATUS "${PROJECT_NAME} PADDLE_LIB_DIR: ${PADDLE_LIB_DIR}")
-#]]
 add_definitions(-DPADDLE_WITH_MKLDNN)
 message(STATUS "MATH_LIB : ${MATH_LIB}")
 message(STATUS "MKLDNN_LIB : ${MKLDNN_LIB}")
@@ -42,12 +35,14 @@ target_link_libraries(${PROJECT_NAME}
         PUBLIC
         ${MACOS_LD_FLAGS}
         ${ARCHIVE_START}
+        # use this static library > Paddle 2.0
         # ${PADDLE_LIB}/paddle/fluid/inference/libpaddle_inference.so
         ${ARCHIVE_END}
         ${MATH_LIB}
         ${MKLDNN_LIB}
+        # use this static library <= Paddle 2.0
         paddle_framework
-        gflags glog protobuf xxhash iomp5 z
+        gflags glog protobuf xxhash iomp5
         # cudart
         ${TBB_LIBRARIES}
         ${EXTERNAL_LIB}
@@ -60,19 +55,21 @@ add_executable(farthest_point_sampling_op_test
 
 ## add links
 set_target_properties(farthest_point_sampling_op_test PROPERTIES LINKER_LANGUAGE CXX)
-
+#[[
 target_include_directories(farthest_point_sampling_op_test
         PRIVATE
         ${Boost_INCLUDE_DIRS})
 target_link_directories(farthest_point_sampling_op_test
-        PRIVATE
-        ${Boost_LIBRARY_DIRS})
-
+        PUBLIC
+        "${Boost_LIBRARY_DIRS}")
+]]
 echo ("PADDLE_LIB_DIR : ${PADDLE_LIB_DIR}")
 target_link_directories(farthest_point_sampling_op_test
         PUBLIC
         ${PADDLE_LIB_DIR})
+echo ("PCL_LIBRARIES : ${PCL_LIBRARIES}")
 target_link_libraries(farthest_point_sampling_op_test
         ${PROJECT_NAME}
         ${PCL_LIBRARIES}
-        -lz)
+        /usr/local/lib/libz.so.1.2.9
+        )

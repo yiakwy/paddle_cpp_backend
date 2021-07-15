@@ -42,7 +42,10 @@ string(REPLACE "\n" ";" THIRD_INCR ${THIRD_INCR})
 ### Step 3: add general headers ###
 
 # add Paddle main line headers
+# include_directories("${PADDLE_SRC}")
+
 # Make sure protoc in python is the version of c++ used (v3.1.0)
+message(STATUS "PADDLE_INCR : ${PADDLE_INCR}")
 include_directories("${PADDLE_INCR}")
 # help to discover generated headers:
 #   1. protobuf files, e.g.: "paddle/fluid/platform/error_codes.pb.h"
@@ -136,22 +139,3 @@ include_directories(${SRCS_ROOT})
 
 # add sub modules
 add_subdirectory(${SRCS_ROOT})
-
-#[[
-### Step 7: specify local binaries and libraries
-
-add_executable(demo_trainer demo_trainer.cc)
-set_target_properties(demo_trainer PROPERTIES LINKER_LANGUAGE CXX)
-
-# target_include_directories(demo_trainer PUBLIC ${PADDLE_LIB}/third_party/threadpool/src/extern_threadpool)
-target_include_directories(demo_trainer PUBLIC ${PADDLE_LIB}/third_party/dlpack/src/extern_dlpack/include/)
-target_link_libraries(demo_trainer
-        ${MACOS_LD_FLAGS}
-        ${ARCHIVE_START}
-        ${PADDLE_LIB}/paddle/fluid/inference/libpaddle_inference.so
-        ${ARCHIVE_END}
-        ${MATH_LIB}
-        ${MKLDNN_LIB}
-        gflags glog protobuf z xxhash
-        ${EXTERNAL_LIB})
-]]

@@ -23,13 +23,12 @@
 
 #include <boost/shared_ptr.hpp>
 // the latest build pcl compatible with boost-1.41.0 (published in 2009) is PCL 1.7.0
-// however, this build has many problems with existing Eigen3
-/*
+// however, this build has many problems with existing Eigen3, hence we make boost shipped with paddle
+// private to its operators
 #include <pcl/io/pcd_io.h>
 #include <pcl/point_types.h>
 #include <pcl/point_cloud.h>
 #include <pcl/point_traits.h>
- */
 
 #include "paddle/fluid/framework/executor.h"
 #include "paddle/fluid/platform/device_context.h"
@@ -119,33 +118,44 @@ int main(int argc, char** argv) {
 
     pp3d::operators::farthestPointSampling<platform::CPUDeviceContext>(&shape[0], 3, sample_size, points, points_indices);
 
+    std::string name;
     // dump points back to PCD format for visualization
-    // using PCLPoint = pcl::PointXYZI;
-    auto dump_points = [=] (double* points, int size) {
-        /*
+    using PCLPoint = pcl::PointXYZI;
+    auto dump_points = [=, &name] (double* points, int size, const int* indices=nullptr) {
         pcl::PointCloud<PCLPoint>::Ptr cloud(new pcl::PointCloud<PCLPoint>);
         PCLPoint tmp_point;
-        for (size_t i=0; i < size; i++)
-        {
-            tmp_point.x = points[i*4+0];
-            tmp_point.y = points[i*4+1];
-            tmp_point.z = points[i*4+2];
-            tmp_point.intensity = points[i*4+3];
-            cloud->push_back(tmp_point);
+        if (indices == nullptr) {
+            for (size_t i = 0; i < size; i++) {
+                tmp_point.x = points[i * 4 + 0];
+                tmp_point.y = points[i * 4 + 1];
+                tmp_point.z = points[i * 4 + 2];
+                tmp_point.intensity = points[i * 4 + 3];
+                cloud->push_back(tmp_point);
+            }
+        } else {
+            for (size_t i = 0; i < size; i++) {
+                tmp_point.x = points[points_indices[i] * 4 + 0];
+                tmp_point.y = points[points_indices[i] * 4 + 1];
+                tmp_point.z = points[points_indices[i] * 4 + 2];
+                tmp_point.intensity = points[points_indices[i] * 4 + 3];
+                cloud->push_back(tmp_point);
+            }
         }
 
         // @todo TODO move generated file to log folder
 
         pcl::PCDWriter writer;
-        if (writer.write("filtered_points_frame_0.pcd", *cloud, false) < 0) {
+        if (writer.write(name + "_points_frame_0.pcd", *cloud, false) < 0) {
             LOG(FATAL) << "cloud for the test file is invalid. Exit";
         }
-         */
 
     };
+    name = "ori";
     dump_points(points, num_returns);
     LOG(INFO) << "test points is dumped to disk";
 
+    name = "filtered";
+    dump_points(points, sample_size, points_indices);
     LOG(INFO) << "filtered points is dumped to disk";
 
     // deallocate points
