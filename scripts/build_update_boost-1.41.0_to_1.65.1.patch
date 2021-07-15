@@ -1,0 +1,28 @@
+diff --git a/cmake/external/boost.cmake b/cmake/external/boost.cmake
+index f14195480b..241240dc41 100644
+--- a/cmake/external/boost.cmake
++++ b/cmake/external/boost.cmake
+@@ -22,9 +22,12 @@ set(BOOST_PROJECT       "extern_boost")
+ # version of boost, say, 1.66.0, doesn't build on CentOS 6.  We
+ # checked that the devtools package of CentOS 6 installs boost 1.41.0.
+ # So we use 1.41.0 here.
+-set(BOOST_VER   "1.41.0")
+-set(BOOST_TAR   "boost_1_41_0" CACHE STRING "" FORCE)
+-set(BOOST_URL   "http://paddlepaddledeps.bj.bcebos.com/${BOOST_TAR}.tar.gz" CACHE STRING "" FORCE)
++# set(BOOST_VER   "1.41.0")
++set (BOOST_VER    "1.65.1")
++# set(BOOST_TAR   "boost_1_41_0" CACHE STRING "" FORCE)
++set (BOOST_TAR    "boost_1_65_1" CACHE STRING "" FORCE)
++# set(BOOST_URL   "http://paddlepaddledeps.bj.bcebos.com/${BOOST_TAR}.tar.gz" CACHE STRING "" FORCE)
++set (BOOST_URL    "https://boostorg.jfrog.io/artifactory/main/release/1.65.1/source/boost_1_65_1.tar.gz" CACHE STRING "" FORCE)
+ 
+ MESSAGE(STATUS "BOOST_VERSION: ${BOOST_VER}, BOOST_URL: ${BOOST_URL}")
+ 
+@@ -41,6 +44,7 @@ include_directories(${BOOST_INCLUDE_DIR})
+ if(WIN32 AND MSVC_VERSION GREATER_EQUAL 1600)
+     add_definitions(-DBOOST_HAS_STATIC_ASSERT)
+ endif()
++add_definitions(-DBOOST_VARIANT_USE_RELAXED_GET_BY_DEFAULT)
+ 
+ ExternalProject_Add(
+     ${BOOST_PROJECT}

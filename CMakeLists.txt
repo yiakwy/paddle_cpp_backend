@@ -42,7 +42,10 @@ string(REPLACE "\n" ";" THIRD_INCR ${THIRD_INCR})
 ### Step 3: add general headers ###
 
 # add Paddle main line headers
+# include_directories("${PADDLE_SRC}")
+
 # Make sure protoc in python is the version of c++ used (v3.1.0)
+message(STATUS "PADDLE_INCR : ${PADDLE_INCR}")
 include_directories("${PADDLE_INCR}")
 # help to discover generated headers:
 #   1. protobuf files, e.g.: "paddle/fluid/platform/error_codes.pb.h"
@@ -59,6 +62,7 @@ include_directories("${PADDLE_LIB}/third_party/install/gflags/include")
 include_directories("${PADDLE_LIB}/third_party/install/xxhash/include")
 include_directories("${PADDLE_LIB}/third_party/install/zlib/include")
 
+# Note paddle uses boost 1.41.0 which is too old to use
 include_directories("${PADDLE_LIB}/third_party/boost")
 
 # include Eigen 3 headers not ended with typical ".h" or ".hpp" suffix
@@ -67,6 +71,7 @@ include_directories("${PADDLE_LIB}/third_party/eigen3/src/extern_eigen3/")
 ### Step 4: link to general dependencies ###
 
 # link to general dependencies
+message (STATUS "PADDLE_LIB_DIR : ${PADDLE_LIB_DIR}")
 link_directories("${PADDLE_LIB_DIR}")
 
 # or link to general dependencies manually
@@ -79,8 +84,8 @@ link_directories("${PADDLE_LIB}/third_party/install/zlib/lib")
 ### Step 5: link optional libraries
 
 # MKL library is used for CPU kernel by default
-option(WITH_MKLDNN     "Compile PaddlePaddle with MKLDNN"                                   OFF)
-option(WITH_MKL        "Compile PaddlePaddle with MKL support, default use openblas."       OFF)
+option(WITH_MKLDNN     "Compile PaddlePaddle with MKLDNN"                                   ON)
+option(WITH_MKL        "Compile PaddlePaddle with MKL support, default use openblas."       ON)
 
 if(WITH_MKLDNN)
   add_definitions(-DPADDLE_WITH_MKLDNN)
@@ -90,6 +95,7 @@ if(WITH_MKLDNN)
   else(WIN32)
     set(MKLDNN_LIB ${PADDLE_LIB}/third_party/install/mkldnn/lib/libmkldnn.so)
   endif(WIN32)
+  link_directories(${PADDLE_LIB}/third_party/install/mkldnn/lib)
 endif(WITH_MKLDNN)
 
 if(WITH_MKL)
@@ -99,6 +105,7 @@ if(WITH_MKL)
   else(WIN32)
     set(MATH_LIB ${PADDLE_LIB}/third_party/install/mklml/lib/libmklml_intel.so)
   endif(WIN32)
+  link_directories(${PADDLE_LIB}/third_party/install/mklml/lib)
 else()
   if(APPLE)
     set(MATH_LIB cblas)
@@ -123,6 +130,7 @@ endif(APPLE)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O0 -g")
 
 include(cmake/Utils.cmake)
+include (cmake/Relies.cmake)
 
 set (SRCS_ROOT "${PROJECT_SOURCE_DIR}/modules")
 
@@ -131,22 +139,3 @@ include_directories(${SRCS_ROOT})
 
 # add sub modules
 add_subdirectory(${SRCS_ROOT})
-
-#[[
-### Step 7: specify local binaries and libraries
-
-add_executable(demo_trainer demo_trainer.cc)
-set_target_properties(demo_trainer PROPERTIES LINKER_LANGUAGE CXX)
-
-# target_include_directories(demo_trainer PUBLIC ${PADDLE_LIB}/third_party/threadpool/src/extern_threadpool)
-target_include_directories(demo_trainer PUBLIC ${PADDLE_LIB}/third_party/dlpack/src/extern_dlpack/include/)
-target_link_libraries(demo_trainer
-        ${MACOS_LD_FLAGS}
-        ${ARCHIVE_START}
-        ${PADDLE_LIB}/paddle/fluid/inference/libpaddle_inference.so
-        ${ARCHIVE_END}
-        ${MATH_LIB}
-        ${MKLDNN_LIB}
-        gflags glog protobuf z xxhash
-        ${EXTERNAL_LIB})
-]]
