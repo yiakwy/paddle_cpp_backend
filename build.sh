@@ -2,13 +2,10 @@
 
 set -x
 
-PADDLE_ROOT=/home/yiak/WorkSpace/Github/Paddle-Released-2.0
+PADDLE_ROOT=/home/yiak/WorkSpace/Github/Paddle #-Released-2.0
 TURN_ON_MKL=ON # use MKL or Openblas
 
-# generate models program description
-# python demo_network.py
-
-# build demo trainer
+# build paddle_cpp_backend
 BUILD=cmake-build-debug 
 # BUILD=build
 paddle_install_dir=${PADDLE_ROOT}/build

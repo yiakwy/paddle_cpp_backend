@@ -21,16 +21,17 @@ add_library(${PROJECT_NAME} SHARED
 set_target_properties(${PROJECT_NAME} PROPERTIES LINKER_LANGUAGE CXX PRIVATE ${CMAKE_CXX_FLAGS})
 
 # add cuda support
+add_definitions(-DPADDLE_WITH_CUDA)
 cuda_include_directories(${CMAKE_CURRENT_SOURCE_DIR})
-cuda_add_library(sampling_cu_kernel
+cuda_add_library(sampling_op_cu_kernel
         "${CMAKE_CURRENT_SOURCE_DIR}/farthest_point_sampling_op.cu"
         )
+target_include_directories(sampling_op_cu_kernel PRIVATE ${PADDLE_LIB}/third_party/dlpack/src/extern_dlpack/include/)
 
 # add paddle libraries support
 
 include_directories("${PADDLE_LIB}/third_party/install/mklml/include")
 
-# target_include_directories(${PROJECT_NAME} PUBLIC ${THIRD_INCR})
 target_include_directories(${PROJECT_NAME} PUBLIC ${PADDLE_LIB}/third_party/dlpack/src/extern_dlpack/include/)
 target_include_directories(${PROJECT_NAME} PRIVATE
         "${PADDLE_INCR}"
@@ -53,6 +54,8 @@ target_link_libraries(${PROJECT_NAME}
         ${TBB_LIBRARIES}
         ${EXTERNAL_LIB}
         ${ZLIB_LIBRARIES}
+        # cu kernel
+        sampling_op_cu_kernel
         )
 
 ### farthest point sampling local test ###
@@ -61,14 +64,6 @@ add_executable(farthest_point_sampling_op_test
 
 ## add links
 set_target_properties(farthest_point_sampling_op_test PROPERTIES LINKER_LANGUAGE CXX)
-#[[
-target_include_directories(farthest_point_sampling_op_test
-        PRIVATE
-        ${Boost_INCLUDE_DIRS})
-target_link_directories(farthest_point_sampling_op_test
-        PUBLIC
-        "${Boost_LIBRARY_DIRS}")
-]]
 echo ("PADDLE_LIB_DIR : ${PADDLE_LIB_DIR}")
 target_link_directories(farthest_point_sampling_op_test
         PUBLIC

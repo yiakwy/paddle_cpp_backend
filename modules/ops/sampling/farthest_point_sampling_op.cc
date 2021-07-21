@@ -17,9 +17,7 @@
 #include <Eigen/Dense>
 #include <Eigen/Core>
 
-#include <tbb/tbb.h>
 #include <tbb/parallel_for.h>
-#include <tbb/parallel_reduce.h>
 #include <tbb/blocked_range.h>
 
 #include <functional>
@@ -50,7 +48,7 @@ void farthestPointSampling<platform::CPUDeviceContext>(int* shape, int size, int
         LOG(INFO) << "==Batch " << i << "===";
 
         double* buf_points_in_ptr = dataset_in_ptr + i * height * width;
-        int* temp_points_in_indices_ptr = dataset_in_indices_ptr + i * height * m;
+        int* temp_points_in_indices_ptr = dataset_in_indices_ptr + i * m;
 
         Eigen::VectorXd dists;
         Eigen::VectorXi dists_indices;
