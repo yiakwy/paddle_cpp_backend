@@ -72,5 +72,6 @@ echo ("PCL_LIBRARIES : ${PCL_LIBRARIES}")
 target_link_libraries(farthest_point_sampling_op_test
         ${PROJECT_NAME}
         ${PCL_LIBRARIES}
+        base
         /usr/local/lib/libz.so.1.2.9
         )

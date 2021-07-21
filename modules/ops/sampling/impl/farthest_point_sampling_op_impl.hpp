@@ -55,26 +55,26 @@ struct maximum : public std::binary_function<_Tp, _Tp, _Tp>
 // @todo TODO replace to imperative form to reduce the copy of data
 // Ideal(threads are always available) Space complexity : O(num_of_threads * log(N))
 // Ideal(threads are always available) Times complexity :
-struct MinVal {
+struct MaxVal {
     size_t idx;
     float val;
 
-    MinVal() : idx(0), val(0) {}
-    MinVal(size_t a, float b) {
+    MaxVal() : idx(0), val(0) {}
+    MaxVal(size_t a, float b) {
         idx = a;
         val = b;
     }
 };
 
 template <typename Fn>
-MinVal ParallelReduce(double* values, int size, Fn reducer, size_t grainsize=1)
+MaxVal ParallelReduce(double* values, int size, Fn reducer, size_t grainsize=1)
 {
     return tbb::parallel_reduce(
             tbb::blocked_range<size_t>(0, size),
-            MinVal(0, 0),
+            MaxVal(0, 0),
             reducer,
             //maximum<double>()
-            [] (MinVal x, MinVal y) -> MinVal {
+            [] (MaxVal x, MaxVal y) -> MaxVal {
                 if (x.val > y.val) {
                     return x;
                 } else {

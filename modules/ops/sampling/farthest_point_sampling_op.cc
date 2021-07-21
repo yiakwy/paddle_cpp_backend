@@ -90,9 +90,9 @@ void farthestPointSampling<platform::CPUDeviceContext>(int* shape, int size, int
             //
             // While, in CPU, we split the array into ranges and perform CPU reduction in parallel. Then we merge the
             // computed results by applying the same reduction again.
-            MinVal farthest_point = ParallelReduce(buf_points_in_ptr, height, [=] (const tbb::blocked_range<size_t>& r, MinVal init_val) -> MinVal {
+            MaxVal farthest_point = ParallelReduce(buf_points_in_ptr, height, [=] (const tbb::blocked_range<size_t>& r, MaxVal init_val) -> MaxVal {
                 double x, y, z, dx, dy, dz;
-                MinVal tmp_farthest_point;
+                MaxVal tmp_farthest_point;
                 double tmp_farthest_dist = farthest_dist;
                 double tmp_idx = -1;
 
